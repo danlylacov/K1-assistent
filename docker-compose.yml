@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  rag_api:
+    build:
+      context: ./RAG_API
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: ${RAG_PORT}
+      COLLECTION_NAME: ${COLLECTION_NAME}
+      # optional
+      GIGACHAT_CREDENTIALS: ${GIGACHAT_CREDENTIALS}
+    ports:
+      - "${RAG_PORT}:8000"
+    volumes:
+      - rag_chroma:/app/RAG_API/chroma_db
+      - rag_uploads:/app/RAG_API/uploads
+
+  admin_backend:
+    build:
+      context: ./admin_panel/backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ADMIN_PORT: ${ADMIN_BACKEND_PORT}
+      BOT_TOKEN: ${BOT_TOKEN}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      RAG_API_URL: http://rag_api:8000
+    depends_on:
+      - postgres
+      - rag_api
+    ports:
+      - "${ADMIN_BACKEND_PORT}:8001"
+
+  admin_frontend:
+    build:
+      context: ./admin_panel/frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ADMIN_BACKEND_URL: http://admin_backend:8001
+    depends_on:
+      - admin_backend
+    ports:
+      - "${ADMIN_FRONTEND_PORT}:5173"
+
+  telegram_bot:
+    build:
+      context: ./telegram_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      RAG_API_URL: http://rag_api:8000
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      - postgres
+      - rag_api
+
+volumes:
+  pg_data:
+  rag_chroma:
+  rag_uploads:
+
+

@@ -1,0 +1,33 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root{
+  --blue-900:#0B1F4B;
+  --blue-700:#123B8A;
+  --blue-500:#1D63E0;
+  --yellow-500:#FFD400;
+  --yellow-400:#FFE066;
+  --bg:#0A1020;
+  --card:#0F1A35;
+  --card-2:#111F3F;
+  --text:#EAF1FF;
+  --muted:#A9B7D0;
+  --border:rgba(255,255,255,0.10);
+  --shadow: 0 16px 40px rgba(0,0,0,0.35);
+  --radius: 16px;
+}
+
+body{
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(1200px 800px at 10% 10%, rgba(29,99,224,0.25), transparent 60%),
+    radial-gradient(900px 600px at 80% 20%, rgba(255,212,0,0.18), transparent 55%),
+    radial-gradient(900px 700px at 30% 90%, rgba(18,59,138,0.20), transparent 55%),
+    var(--bg);
+  color: var(--text);
+}
+
+a{ color: var(--yellow-500); text-decoration: none; }
+a:hover{ text-decoration: underline; }
+
