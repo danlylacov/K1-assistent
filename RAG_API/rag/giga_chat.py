@@ -1,6 +1,7 @@
 import os
 import logging
 from gigachat import GigaChat
+from gigachat.models import Chat, Messages
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,13 +33,15 @@ class LLMProvider:
         self._system_prompt = system_prompt or self._get_default_prompt()
 
     def _ask_ai(self, user_prompt: str, system_prompt: str = None) -> str:
-        messages = []
+        messages_list = []
         if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_prompt})
+            messages_list.append(Messages(role="system", content=system_prompt))
+        messages_list.append(Messages(role="user", content=user_prompt))
         try:
-            logger.debug(f"Отправка запроса в GigaChat с {len(messages)} сообщениями")
-            prompt = self.giga.chat(messages)
+            logger.debug(f"Отправка запроса в GigaChat с {len(messages_list)} сообщениями")
+            # Создаем объект Chat с сообщениями
+            chat_request = Chat(messages=messages_list)
+            prompt = self.giga.chat(chat_request)
             response_content = prompt.choices[0].message.content
             logger.debug(f"✅ Получен ответ от GigaChat (длина: {len(response_content)})")
             return response_content
