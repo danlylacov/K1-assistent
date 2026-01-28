@@ -10,7 +10,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
-  rag-api:
+  rag_api:
     build:
       context: .
       dockerfile: Dockerfile
