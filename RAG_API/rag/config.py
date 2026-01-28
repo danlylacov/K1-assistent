@@ -17,7 +17,7 @@ class EmbeddingConfig:
     """Конфигурация модели эмбеддингов"""
     model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
     normalize_embeddings: bool = True
-    batch_size: int = 32
+    batch_size: int = 8  # Уменьшено с 32 для экономии памяти (2GB RAM)
 
 @dataclass
 class RetrievalConfig:

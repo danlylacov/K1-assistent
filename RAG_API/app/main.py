@@ -1,11 +1,21 @@
 import uvicorn
 import logging
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from RAG_API.app.core.config import PORT, DEBUG
 from RAG_API.app.services.rag_service import rag_service
 from RAG_API.app.api.routes import documents, config
 from RAG_API.app.api.routes import query, health
+
+# Оптимизация памяти для Python перед импортом других модулей
+os.environ.setdefault('PYTHONHASHSEED', '0')
+os.environ.setdefault('MALLOC_ARENA_MAX', '2')
+os.environ.setdefault('OMP_NUM_THREADS', '2')
+# Ограничение потоков для NumPy и других библиотек
+os.environ.setdefault('OPENBLAS_NUM_THREADS', '2')
+os.environ.setdefault('MKL_NUM_THREADS', '2')
+os.environ.setdefault('NUMEXPR_NUM_THREADS', '2')
 
 # Настройка логирования
 logging.basicConfig(

@@ -36,7 +36,9 @@ class RAGPipeline:
         )
     
     def ingest_document(self, document_path: str) -> int:
-        """Загружает документ в векторную БД"""
+        """Загружает документ в векторную БД с оптимизацией памяти"""
+        import gc
+        
         # 1. Конвертация в текст
         document = document_to_markdown(document_path)
         
@@ -44,7 +46,11 @@ class RAGPipeline:
         chunks = split_document(document, self.config.chunking)
         print(f"Документ разбит на {len(chunks)} чанков")
         
-        # 3. Создание эмбеддингов
+        # Очистка памяти после разбиения
+        del document
+        gc.collect()
+        
+        # 3. Создание эмбеддингов (уже оптимизировано в encode_batch)
         documents_text = [chunk["content"] for chunk in chunks]
         embeddings = self.embedding_service.encode_batch(documents_text)
         print(f"Создано {len(embeddings)} эмбеддингов")
@@ -52,6 +58,10 @@ class RAGPipeline:
         # 4. Загрузка в векторную БД
         count = self.vector_store.upload_documents(documents_text, embeddings, chunks)
         print(f"Загружено {count} документов в векторную БД")
+        
+        # Финальная очистка памяти
+        del documents_text, embeddings
+        gc.collect()
         
         return count
     

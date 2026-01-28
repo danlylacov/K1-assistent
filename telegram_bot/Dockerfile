@@ -17,3 +17,5 @@ COPY . /app
 CMD ["python", "bot.py"]
 
 
+
+

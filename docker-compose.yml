@@ -10,22 +10,48 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
-  rag_api:
+  rag-api:
     build:
-      context: ./RAG_API
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      PORT: ${RAG_PORT}
-      COLLECTION_NAME: ${COLLECTION_NAME}
-      # optional
-      GIGACHAT_CREDENTIALS: ${GIGACHAT_CREDENTIALS}
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-api
     ports:
-      - "${RAG_PORT}:8000"
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DEBUG=False
+      - PYTHONHASHSEED=0
+      - MALLOC_ARENA_MAX=2
+      - OMP_NUM_THREADS=2
+    # Ограничения ресурсов для сервера 2GB RAM, 2 CPU
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1800M  # Оставляем 200MB для системы
+        reservations:
+          cpus: '1'
+          memory: 1000M
+    mem_limit: 1800m
+    mem_reservation: 1000m
+    cpus: 2
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     volumes:
-      - rag_chroma:/app/RAG_API/chroma_db
-      - rag_uploads:/app/RAG_API/uploads
+      - ./chroma_db:/app/RAG_API/chroma_db
+      - ./uploads:/app/RAG_API/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   admin_backend:
     build:

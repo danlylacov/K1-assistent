@@ -3,6 +3,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from RAG_API.rag.config import EmbeddingConfig
 import gc
+import os
 
 class EmbeddingService:
     """Сервис для создания эмбеддингов"""
@@ -17,9 +18,31 @@ class EmbeddingService:
     
     @property
     def model(self) -> SentenceTransformer:
-        """Ленивая загрузка модели"""
+        """Ленивая загрузка модели с оптимизацией для CPU"""
         if self._model is None:
-            self._model = SentenceTransformer(self.config.model_name)
+            # Оптимизация для CPU-only режима и экономии памяти
+            model_kwargs = {
+                'device': 'cpu',
+                'trust_remote_code': True
+            }
+            
+            # Используем более эффективные настройки для ограниченной памяти
+            encode_kwargs = {
+                'normalize_embeddings': self.config.normalize_embeddings,
+                'batch_size': self.config.batch_size,
+                'show_progress_bar': False,
+                'convert_to_numpy': True
+            }
+            
+            self._model = SentenceTransformer(
+                self.config.model_name,
+                model_kwargs=model_kwargs,
+                encode_kwargs=encode_kwargs
+            )
+            
+            # Оптимизация модели для CPU
+            if hasattr(self._model, 'eval'):
+                self._model.eval()
         return self._model
     
     def encode(
@@ -50,9 +73,14 @@ class EmbeddingService:
         return self.encode([query], show_progress=False)[0]
     
     def encode_batch(self, texts: List[str], batch_size: int = None) -> np.ndarray:
-        """Создает эмбеддинги батчами для больших объемов данных"""
+        """Создает эмбеддинги батчами для больших объемов данных с оптимизацией памяти"""
         if batch_size is None:
             batch_size = self.config.batch_size
+        
+        # Уменьшаем batch_size если тексты очень длинные
+        avg_length = sum(len(t) for t in texts[:min(10, len(texts))]) / min(10, len(texts))
+        if avg_length > 1000:
+            batch_size = max(4, batch_size // 2)
         
         all_embeddings = []
         for i in range(0, len(texts), batch_size):
@@ -60,10 +88,15 @@ class EmbeddingService:
             batch_embeddings = self.encode(batch, show_progress=False)
             all_embeddings.append(batch_embeddings)
 
-            if i % (batch_size * 4) == 0:
+            # Более агрессивная очистка памяти для ограниченных ресурсов
+            if i % (batch_size * 2) == 0:
                 gc.collect()
         
-        return np.vstack(all_embeddings) if len(all_embeddings) > 1 else all_embeddings[0]
+        result = np.vstack(all_embeddings) if len(all_embeddings) > 1 else all_embeddings[0]
+        # Финальная очистка
+        del all_embeddings
+        gc.collect()
+        return result
     
     def clear_cache(self):
         """Очищает кэш модели"""
