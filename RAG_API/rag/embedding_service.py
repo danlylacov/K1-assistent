@@ -20,24 +20,11 @@ class EmbeddingService:
     def model(self) -> SentenceTransformer:
         """Ленивая загрузка модели с оптимизацией для CPU"""
         if self._model is None:
-            # Оптимизация для CPU-only режима и экономии памяти
-            model_kwargs = {
-                'device': 'cpu',
-                'trust_remote_code': True
-            }
-            
-            # Используем более эффективные настройки для ограниченной памяти
-            encode_kwargs = {
-                'normalize_embeddings': self.config.normalize_embeddings,
-                'batch_size': self.config.batch_size,
-                'show_progress_bar': False,
-                'convert_to_numpy': True
-            }
-            
+            # Для версии sentence-transformers==2.2.2 нельзя передавать model_kwargs / encode_kwargs
+            # Инициализируем модель в CPU-режиме, остальные параметры задаём при encode()
             self._model = SentenceTransformer(
                 self.config.model_name,
-                model_kwargs=model_kwargs,
-                encode_kwargs=encode_kwargs
+                device="cpu"
             )
             
             # Оптимизация модели для CPU
