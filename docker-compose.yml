@@ -12,7 +12,7 @@ services:
 
   rag_api:
     build:
-      context: .
+      context: ./RAG_API
       dockerfile: Dockerfile
     container_name: rag-api
     ports:
@@ -43,8 +43,8 @@ services:
         soft: 65536
         hard: 65536
     volumes:
-      - ./chroma_db:/app/RAG_API/chroma_db
-      - ./uploads:/app/RAG_API/uploads
+      - ./RAG_API/chroma_db:/app/RAG_API/chroma_db
+      - ./RAG_API/uploads:/app/RAG_API/uploads
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" ]
